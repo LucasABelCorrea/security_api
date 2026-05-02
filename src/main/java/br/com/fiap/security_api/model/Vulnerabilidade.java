@@ -18,6 +18,7 @@ public class Vulnerabilidade {
     @Column(length = 100, nullable = false)
     private String titulo;
 
+    @Column(length = 10, nullable = false)
     private BigDecimal severidade;
 
     public Vulnerabilidade(Long cve, String titulo, BigDecimal severidade) {
