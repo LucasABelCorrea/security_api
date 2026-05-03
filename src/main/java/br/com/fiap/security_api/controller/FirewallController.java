@@ -45,7 +45,7 @@ public class FirewallController {
 
     //Update
     @PutMapping("/{id}")
-    public ResponseEntity<Firewall> update (@PathVariable Long id, Firewall firewall) {
+    public ResponseEntity<Firewall> update (@PathVariable Long id, @RequestBody Firewall firewall) {
         Optional<Firewall> optFirewall = repository.findById(id);
 
         if (optFirewall.isPresent()) {
