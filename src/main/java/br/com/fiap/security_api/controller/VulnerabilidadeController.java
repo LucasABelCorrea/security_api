@@ -1,4 +1,4 @@
-package br.com.fiap.security_api.controllers;
+package br.com.fiap.security_api.controller;
 
 import java.util.List;
 import java.util.Optional;
