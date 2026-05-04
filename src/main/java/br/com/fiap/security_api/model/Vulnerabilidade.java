@@ -5,12 +5,14 @@ import java.math.BigDecimal;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @Entity
 @NoArgsConstructor
+@Table(name = "vulnerabilidades")
 public class Vulnerabilidade {
     @Id
     private Long cve;
@@ -21,9 +23,9 @@ public class Vulnerabilidade {
     @Column(length = 10, nullable = false)
     private BigDecimal severidade;
 
-    public Vulnerabilidade(Long cve, String titulo, BigDecimal severidade) {
-        this.cve = cve;
-        this.titulo = titulo;
-        this.severidade = severidade;
-    }
+    @Column(length = 10, nullable = false)
+    private BigDecimal versao;
+
+    @Column(nullable = false)
+    private Integer qtdAtivosAfetados;
 }
