@@ -1,7 +1,6 @@
 package br.com.fiap.security_api.controller;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,8 +13,14 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.fiap.security_api.dto.FirewallCreateRequest;
+import br.com.fiap.security_api.dto.FirewallMapper;
+import br.com.fiap.security_api.dto.FirewallResponse;
+import br.com.fiap.security_api.dto.FirewallUpdateRequest;
 import br.com.fiap.security_api.model.Firewall;
-import br.com.fiap.security_api.repository.FirewallRepository;
+import br.com.fiap.security_api.service.FirewallService;
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
@@ -23,35 +28,37 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class FirewallController {
 
     @Autowired
-    private FirewallRepository repository;
+    private FirewallService service;
+
+    @Autowired
+    private FirewallMapper firewallMapper;
 
     //Insert into
     @PostMapping("")
-    public ResponseEntity<Firewall> create (@RequestBody Firewall firewall) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(repository.save(firewall));
+    public ResponseEntity<FirewallResponse> create (@Valid @RequestBody FirewallCreateRequest dtoRequest) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(firewallMapper.toDto(service.createOrUpdate(firewallMapper.toModel(dtoRequest))));
     }
 
     //Select *
     @GetMapping("")
-    public ResponseEntity<List<Firewall>> findAll () {
-        return ResponseEntity.ok(repository.findAll());
+    public ResponseEntity<List<FirewallResponse>> findAll () {
+        return ResponseEntity.ok(service.findAll().stream().map(firewall -> firewallMapper.toDto(firewall)).toList());
     }
 
     //Select
     @GetMapping("/{id}")
-    public ResponseEntity<Firewall> findById (@PathVariable Long id) {
-        return repository.findById(id).map(ResponseEntity :: ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<FirewallResponse> findById (@PathVariable Long id) {
+        return service.findById(id).map(firewall -> firewallMapper.toDto(firewall)).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     //Update
     @PutMapping("/{id}")
-    public ResponseEntity<Firewall> update (@PathVariable Long id, @RequestBody Firewall firewall) {
-        Optional<Firewall> optFirewall = repository.findById(id);
+    public ResponseEntity<FirewallResponse> update (@PathVariable Long id, @Valid @RequestBody FirewallUpdateRequest dtoRequest) {
 
-        if (optFirewall.isPresent()) {
-            firewall.setId(id);
-            Firewall firewallAtualizado = repository.save(firewall);
-            return ResponseEntity.ok(firewallAtualizado);
+        if (service.findById(id).isPresent()) {
+            Firewall firewallAtualizado = firewallMapper.toModel(id, dtoRequest);
+            firewallAtualizado.setId(id);
+            return ResponseEntity.ok(firewallMapper.toDto(service.createOrUpdate(firewallAtualizado)));
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -60,7 +67,11 @@ public class FirewallController {
     //Delete
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete (@PathVariable Long id) {
-        repository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        if (service.findById(id).isPresent()) {
+            service.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.noContent().build();
+        }
     }
 }

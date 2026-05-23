@@ -13,8 +13,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import br.com.fiap.security_api.dto.VulnerabilidadeCreateRequest;
+import br.com.fiap.security_api.dto.VulnerabilidadeMapper;
+import br.com.fiap.security_api.dto.VulnerabilidadeResponse;
+import br.com.fiap.security_api.dto.VulnerabilidadeUpdateRequest;
 import br.com.fiap.security_api.model.Vulnerabilidade;
 import br.com.fiap.security_api.repository.VulnerabilidadeRepository;
+import br.com.fiap.security_api.service.VulnerabilidadeService;
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
@@ -22,35 +30,37 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class VulnerabilidadeController {
 
     @Autowired
-    private VulnerabilidadeRepository repository;
+    private VulnerabilidadeService service;
+
+    @Autowired
+    private VulnerabilidadeMapper vulnerabilidadeMapper;
 
     //Insert into
     @PostMapping("")
-    public ResponseEntity<Vulnerabilidade> create (@RequestBody Vulnerabilidade vulnerabilidade) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(repository.save(vulnerabilidade));
+    public ResponseEntity<VulnerabilidadeResponse> create (@Valid @RequestBody VulnerabilidadeCreateRequest dtoRequest) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(vulnerabilidadeMapper.toDto(service.createOrUpdate(vulnerabilidadeMapper.toModel(dtoRequest))));
     }
 
     //Select *
     @GetMapping("")
-    public ResponseEntity<List<Vulnerabilidade>> findAll() {
-        return ResponseEntity.ok(repository.findAll());
+    public ResponseEntity<List<VulnerabilidadeResponse>> findAll() {
+        return ResponseEntity.ok(service.findAll().stream().map(vulnerabilidade -> vulnerabilidadeMapper.toDto(vulnerabilidade)).toList());
     }
 
     //Select
     @GetMapping("/{cve}")
-    public ResponseEntity<Vulnerabilidade> findById(@PathVariable Long cve) {
-        return repository.findById(cve).map(ResponseEntity :: ok).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<VulnerabilidadeResponse> findById(@PathVariable Long cve) {
+        return service.findyById(cve).map(vulnerabilidade -> vulnerabilidadeMapper.toDto(vulnerabilidade)).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     //Update
     @PutMapping("/{cve}")
-    public ResponseEntity<Vulnerabilidade> update (@PathVariable Long cve, @RequestBody Vulnerabilidade vulnerabilidade) {
-        Optional<Vulnerabilidade> optVulnerabilidade = repository.findById(cve);
+    public ResponseEntity<VulnerabilidadeResponse> update (@PathVariable Long cve, @Valid @RequestBody VulnerabilidadeUpdateRequest dtoRequest) {
 
-        if(optVulnerabilidade.isPresent()) {
-            vulnerabilidade.setCve(cve);
-            Vulnerabilidade vulnerabilidadeAtualizada = repository.save(vulnerabilidade);
-            return ResponseEntity.ok(vulnerabilidadeAtualizada);
+        if(service.findyById(cve).isPresent()) {
+            Vulnerabilidade vulnerabilidadeAtualizada = vulnerabilidadeMapper.toModel(cve, dtoRequest);
+            vulnerabilidadeAtualizada.setCve(cve);
+            return ResponseEntity.ok(vulnerabilidadeMapper.toDto(service.createOrUpdate(vulnerabilidadeAtualizada)));
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -59,8 +69,12 @@ public class VulnerabilidadeController {
     //Delete
     @DeleteMapping("/{cve}")
     public ResponseEntity<Void> deleteById (@PathVariable Long cve) {
-        repository.deleteById(cve);
-        return ResponseEntity.noContent().build();
+        if (service.findyById(cve).isPresent()) {
+            service.deleteById(cve);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }
