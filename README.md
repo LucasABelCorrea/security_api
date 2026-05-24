@@ -506,19 +506,6 @@ curl -X DELETE http://localhost:8080/api/v2/vulnerabilidades/1
 
 Para parar a aplicação Spring Boot, pressione `Ctrl + C` no terminal onde ela está rodando.
 
-Para parar e remover o container do MySQL com Docker Compose:
-
-```bash
-# Parar o container mantendo os dados
-docker compose stop
-
-# Parar e remover o container mantendo os dados no volume
-docker compose down
-
-# Parar, remover o container e apagar os dados do volume
-docker compose down -v
-```
-
 Se você usou `docker run` em vez de `docker compose`:
 
 ```bash
