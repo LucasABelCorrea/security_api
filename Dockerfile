@@ -1,14 +1,12 @@
-FROM ubuntu:latest
-
-RUN apt update && \
-    apt upgrade -y && \
-    apt install jdk-17-jdk -y && \
-    apt install maven -y
-
+FROM maven:3.9.8-eclipse-temurin-17-alpine AS build
 WORKDIR /opt/app
-
 COPY . .
+RUN mvn clean package -DskipTests
 
-RUN mvn clean package
-
-CMD ["java", "-jar", "target/app.jar"]
+FROM eclipse-temurin:17-alpine-3.23     
+WORKDIR /opt/app
+COPY --from=build /opt/app/target/app.jar /opt/app/app.jar
+# Envio de um valor padrão para minha variável de ambiente
+# ENV SPRING_PROFILES_ACTIVE=dev
+# CMD [ "java", "-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}", "-jar", "app.jar" ]
+CMD [ "java", "-jar", "app.jar" ]
