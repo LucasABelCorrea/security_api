@@ -13,7 +13,13 @@ A aplicação foi refatorada para seguir uma separação de responsabilidades ma
 - [Novidades da versão atual](#-novidades-da-versão-atual)
 - [Arquitetura da Aplicação](#-arquitetura-da-aplicação)
 - [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Como rodar a aplicação](#-como-rodar-a-aplicação)
+- [Executando via Docker Hub](#-executando-via-docker-hub)
+  - [Baixando a imagem](#1-baixando-a-imagem)
+  - [Variáveis de ambiente](#2-variáveis-de-ambiente)
+  - [Subindo o banco de dados](#3-subindo-o-banco-de-dados)
+  - [Executando a aplicação](#4-executando-a-aplicação)
+  - [Acessando o Swagger / OpenAPI](#5-acessando-o-swagger--openapi)
+- [Como rodar a aplicação (desenvolvimento local)](#-como-rodar-a-aplicação-desenvolvimento-local)
   - [1. Subindo o Banco de Dados com Docker](#1-subindo-o-banco-de-dados-com-docker)
   - [2. Rodando a API Spring Boot](#2-rodando-a-api-spring-boot)
 - [Documentação da API (Swagger)](#-documentação-da-api-swagger)
@@ -176,7 +182,96 @@ security_api/
 
 ---
 
-## ▶️ Como rodar a aplicação
+## 🐳 Executando via Docker Hub
+
+A imagem da aplicação está disponível no Docker Hub e pode ser executada diretamente, sem necessidade de clonar o repositório ou compilar o projeto.
+
+### 1. Baixando a imagem
+
+```bash
+docker pull lucasbel/security_api:1.0.0
+```
+
+### 2. Variáveis de ambiente
+
+A aplicação requer as seguintes variáveis de ambiente para conexão com o banco de dados MySQL:
+
+| Variável | Descrição | Exemplo |
+|----------|-----------|---------|
+| `DB_SERVER_URL` | Host do servidor MySQL | `host.docker.internal` |
+| `DB_SERVER_PORT` | Porta do servidor MySQL | `3306` |
+| `DB_SCHEMA` | Nome do schema/banco de dados | `security` |
+| `DB_USER` | Usuário do banco de dados | `root` |
+| `DB_PWD` | Senha do banco de dados | `root_pwd` |
+| `SPRING_PROFILES_ACTIVE` | Profile ativo da aplicação (`default` ou `prd`) | `default` |
+
+**Diferenças entre os profiles:**
+
+| Configuração | `default` | `prd` |
+|--------------|-----------|-------|
+| `ddl-auto` | `update` (cria/atualiza tabelas automaticamente) | `none` (sem alterações no schema) |
+| `show-sql` | `true` (exibe queries no log) | `false` (queries ocultas) |
+| `createDatabaseIfNotExist` | Sim | Nao |
+
+> **Nota:** O profile `default` cria o banco de dados e as tabelas automaticamente. O profile `prd` exige que o banco e as tabelas ja existam.
+
+### 3. Subindo o banco de dados
+
+Antes de executar a aplicação, suba uma instancia do MySQL:
+
+```bash
+docker run -d \
+  --name security_api_mysql \
+  -e MYSQL_ROOT_PASSWORD=root_pwd \
+  -e MYSQL_DATABASE=security \
+  -p 3306:3306 \
+  mysql:8.0
+```
+
+### 4. Executando a aplicação
+
+**Com profile `default`** (recomendado para desenvolvimento — cria o banco e as tabelas automaticamente):
+
+```bash
+docker run -p 8080:8080 \
+  -e DB_SERVER_URL=host.docker.internal \
+  -e DB_SERVER_PORT=3306 \
+  -e DB_SCHEMA=security \
+  -e DB_USER=root \
+  -e DB_PWD=root_pwd \
+  -e SPRING_PROFILES_ACTIVE=default \
+  lucasbel/security_api:1.0.0
+```
+
+**Com profile `prd`** (producao — exige banco e tabelas pre-existentes):
+
+```bash
+docker run -p 8080:8080 \
+  -e DB_SERVER_URL=host.docker.internal \
+  -e DB_SERVER_PORT=3306 \
+  -e DB_SCHEMA=security \
+  -e DB_USER=root \
+  -e DB_PWD=root_pwd \
+  -e SPRING_PROFILES_ACTIVE=prd \
+  lucasbel/security_api:1.0.0
+```
+
+> **Nota sobre `host.docker.internal`:** Esse hostname permite que o container acesse servicos rodando na maquina host (como o MySQL iniciado via `docker run`). Em ambientes Linux, pode ser necessario adicionar `--add-host=host.docker.internal:host-gateway` ao comando `docker run`.
+
+### 5. Acessando o Swagger / OpenAPI
+
+Apos a aplicação iniciar, a documentação interativa estara disponivel em:
+
+| Recurso | URL |
+|---------|-----|
+| **Swagger UI** | [http://localhost:8080/](http://localhost:8080/) |
+| **OpenAPI JSON** | [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs) |
+
+A interface do Swagger UI permite testar todos os endpoints diretamente pelo navegador.
+
+---
+
+## ▶️ Como rodar a aplicação (desenvolvimento local)
 
 Siga os passos abaixo na ordem para subir o ambiente do zero.
 
