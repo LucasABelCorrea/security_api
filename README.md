@@ -18,7 +18,7 @@ A aplicação foi refatorada para seguir uma separação de responsabilidades ma
   - [2. Subindo o banco de dados MySQL](#2-subindo-o-banco-de-dados-mysql)
   - [3. Variáveis de ambiente necessárias](#3-variáveis-de-ambiente-necessárias)
   - [4. Executando a aplicação com docker run](#4-executando-a-aplicação-com-docker-run)
-  - [5. Acessando o Swagger / OpenAPI](#5-acessando-o-swagger--openapi)
+  - [5. Acessando o Swagger](#5-acessando-o-swagger--openapi)
   - [6. Encerrando os containers](#6-encerrando-os-containers)
 - [Rodando a partir do código-fonte (desenvolvimento local)](#️-rodando-a-partir-do-código-fonte-desenvolvimento-local)
 - [Endpoints Disponíveis](#-endpoints-disponíveis)
@@ -295,8 +295,7 @@ Started Application in X.XXX seconds
 
 ---
 
-### 5. Acessando o Swagger / OpenAPI
-
+### 5. Acessando o Swagger
 Com a aplicação rodando, acesse a documentação interativa pelo navegador em:
 
 ```text
