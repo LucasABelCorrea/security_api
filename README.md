@@ -13,20 +13,17 @@ A aplicação foi refatorada para seguir uma separação de responsabilidades ma
 - [Novidades da versão atual](#-novidades-da-versão-atual)
 - [Arquitetura da Aplicação](#-arquitetura-da-aplicação)
 - [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Executando via Docker Hub](#-executando-via-docker-hub)
-  - [Baixando a imagem](#1-baixando-a-imagem)
-  - [Variáveis de ambiente](#2-variáveis-de-ambiente)
-  - [Subindo o banco de dados](#3-subindo-o-banco-de-dados)
-  - [Executando a aplicação](#4-executando-a-aplicação)
-  - [Acessando o Swagger / OpenAPI](#5-acessando-o-swagger--openapi)
-- [Como rodar a aplicação (desenvolvimento local)](#-como-rodar-a-aplicação-desenvolvimento-local)
-  - [1. Subindo o Banco de Dados com Docker](#1-subindo-o-banco-de-dados-com-docker)
-  - [2. Rodando a API Spring Boot](#2-rodando-a-api-spring-boot)
-- [Documentação da API (Swagger)](#-documentação-da-api-swagger)
+- [Como rodar a aplicação](#-como-rodar-a-aplicação)
+  - [1. Baixando a imagem do Docker Hub](#1-baixando-a-imagem-do-docker-hub)
+  - [2. Subindo o banco de dados MySQL](#2-subindo-o-banco-de-dados-mysql)
+  - [3. Variáveis de ambiente necessárias](#3-variáveis-de-ambiente-necessárias)
+  - [4. Executando a aplicação com docker run](#4-executando-a-aplicação-com-docker-run)
+  - [5. Acessando o Swagger / OpenAPI](#5-acessando-o-swagger--openapi)
+  - [6. Encerrando os containers](#6-encerrando-os-containers)
+- [Rodando a partir do código-fonte (desenvolvimento local)](#️-rodando-a-partir-do-código-fonte-desenvolvimento-local)
 - [Endpoints Disponíveis](#-endpoints-disponíveis)
 - [Modelos, DTOs e campos esperados](#-modelos-dtos-e-campos-esperados)
 - [Exemplos de Requisições](#-exemplos-de-requisições)
-- [Encerrando o ambiente](#-encerrando-o-ambiente)
 - [Autor](#-autor)
 
 ---
@@ -182,42 +179,35 @@ security_api/
 
 ---
 
-## 🐳 Executando via Docker Hub
+## ▶️ Como rodar a aplicação
 
-A imagem da aplicação está disponível no Docker Hub e pode ser executada diretamente, sem necessidade de clonar o repositório ou compilar o projeto.
+A forma recomendada de executar a aplicação é a partir da imagem publicada no **Docker Hub**. Não é necessário clonar o repositório, instalar o Java ou compilar o projeto — basta ter o **Docker** instalado.
 
-### 1. Baixando a imagem
+Imagem oficial: [`lucasbel/security_api:1.0.0`](https://hub.docker.com/r/lucasbel/security_api)
+
+Siga os passos abaixo na ordem.
+
+---
+
+### 1. Baixando a imagem do Docker Hub
+
+Faça o download da imagem da aplicação:
 
 ```bash
 docker pull lucasbel/security_api:1.0.0
 ```
 
-### 2. Variáveis de ambiente
+Para confirmar que a imagem foi baixada com sucesso:
 
-A aplicação requer as seguintes variáveis de ambiente para conexão com o banco de dados MySQL:
+```bash
+docker images lucasbel/security_api
+```
 
-| Variável | Descrição | Exemplo |
-|----------|-----------|---------|
-| `DB_SERVER_URL` | Host do servidor MySQL | `host.docker.internal` |
-| `DB_SERVER_PORT` | Porta do servidor MySQL | `3306` |
-| `DB_SCHEMA` | Nome do schema/banco de dados | `security` |
-| `DB_USER` | Usuário do banco de dados | `root` |
-| `DB_PWD` | Senha do banco de dados | `root_pwd` |
-| `SPRING_PROFILES_ACTIVE` | Profile ativo da aplicação (`default` ou `prd`) | `default` |
+---
 
-**Diferenças entre os profiles:**
+### 2. Subindo o banco de dados MySQL
 
-| Configuração | `default` | `prd` |
-|--------------|-----------|-------|
-| `ddl-auto` | `update` (cria/atualiza tabelas automaticamente) | `none` (sem alterações no schema) |
-| `show-sql` | `true` (exibe queries no log) | `false` (queries ocultas) |
-| `createDatabaseIfNotExist` | Sim | Nao |
-
-> **Nota:** O profile `default` cria o banco de dados e as tabelas automaticamente. O profile `prd` exige que o banco e as tabelas ja existam.
-
-### 3. Subindo o banco de dados
-
-Antes de executar a aplicação, suba uma instancia do MySQL:
+A aplicação depende de um banco **MySQL**. Suba um container antes de iniciar a API:
 
 ```bash
 docker run -d \
@@ -228,9 +218,34 @@ docker run -d \
   mysql:8.0
 ```
 
-### 4. Executando a aplicação
+> ⏳ Aguarde alguns segundos até o MySQL inicializar completamente antes de seguir para o próximo passo.
 
-**Com profile `default`** (recomendado para desenvolvimento — cria o banco e as tabelas automaticamente):
+---
+
+### 3. Variáveis de ambiente necessárias
+
+A imagem recebe toda a configuração por variáveis de ambiente, passadas com a flag `-e` no `docker run`:
+
+| Variável | Descrição | Valor de exemplo |
+|----------|-----------|------------------|
+| `DB_SERVER_URL` | Host do servidor MySQL | `host.docker.internal` |
+| `DB_SERVER_PORT` | Porta do servidor MySQL | `3306` |
+| `DB_SCHEMA` | Nome do schema/banco de dados | `security` |
+| `DB_USER` | Usuário do banco de dados | `root` |
+| `DB_PWD` | Senha do banco de dados | `root_pwd` |
+| `SPRING_PROFILES_ACTIVE` | Profile ativo da aplicação (`default` ou `prd`) | `default` |
+
+> 💡 **Sobre o `host.docker.internal`:** esse hostname permite que o container da API acesse o MySQL rodando na máquina host. No **Linux**, adicione também `--add-host=host.docker.internal:host-gateway` ao comando `docker run`.
+
+---
+
+### 4. Executando a aplicação com `docker run`
+
+O comando mapeia a porta **8080**, define o **profile** e passa as **variáveis de ambiente** de conexão com o banco.
+
+#### Profile `default` — recomendado para testar a imagem
+
+Cria o banco e as tabelas automaticamente. É o profile ideal para o primeiro teste, pois não exige nenhuma preparação prévia do banco:
 
 ```bash
 docker run -p 8080:8080 \
@@ -243,7 +258,9 @@ docker run -p 8080:8080 \
   lucasbel/security_api:1.0.0
 ```
 
-**Com profile `prd`** (producao — exige banco e tabelas pre-existentes):
+#### Profile `prd` — execução em produção
+
+Não altera o schema do banco. Exige que o banco **e as tabelas já existam** previamente:
 
 ```bash
 docker run -p 8080:8080 \
@@ -256,99 +273,99 @@ docker run -p 8080:8080 \
   lucasbel/security_api:1.0.0
 ```
 
-> **Nota sobre `host.docker.internal`:** Esse hostname permite que o container acesse servicos rodando na maquina host (como o MySQL iniciado via `docker run`). Em ambientes Linux, pode ser necessario adicionar `--add-host=host.docker.internal:host-gateway` ao comando `docker run`.
+#### Diferença entre os profiles
 
-### 5. Acessando o Swagger / OpenAPI
+| Comportamento | `default` | `prd` |
+|---------------|-----------|-------|
+| Cria o banco se não existir (`createDatabaseIfNotExist`) | ✅ Sim | ❌ Não |
+| Cria/atualiza tabelas (`spring.jpa.hibernate.ddl-auto`) | `update` | `none` |
+| Exibe as queries SQL no log (`spring.jpa.show-sql`) | `true` | `false` |
+| Exige banco e tabelas pré-existentes | Não | Sim |
+| Uso indicado | Desenvolvimento e testes | Produção |
 
-Apos a aplicação iniciar, a documentação interativa estara disponivel em:
+> ⚠️ Ao usar o profile `prd` sem que o banco e as tabelas existam, a aplicação iniciará mas as requisições aos endpoints falharão. Para o primeiro teste da imagem, use o profile `default`.
 
-| Recurso | URL |
-|---------|-----|
-| **Swagger UI** | [http://localhost:8080/](http://localhost:8080/) |
-| **OpenAPI JSON** | [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs) |
+A aplicação estará pronta quando o log exibir:
 
-A interface do Swagger UI permite testar todos os endpoints diretamente pelo navegador.
+```text
+Started Application in X.XXX seconds
+```
 
 ---
 
-## ▶️ Como rodar a aplicação (desenvolvimento local)
+### 5. Acessando o Swagger / OpenAPI
 
-Siga os passos abaixo na ordem para subir o ambiente do zero.
+Com a aplicação rodando, acesse a documentação interativa pelo navegador em:
 
-### 1. Subindo o Banco de Dados com Docker
-
-A aplicação espera um banco **MySQL** rodando em `localhost:3306` com as seguintes credenciais, definidas em `src/main/resources/application.properties`:
-
-| Configuração | Valor |
-|--------------|-------|
-| Host | `localhost` |
-| Porta | `3306` |
-| Database | `api` |
-| Usuário | `root` |
-| Senha | `root_pwd` |
-
-A URL configurada cria o banco automaticamente se ele ainda não existir:
-
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/api?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+```text
+http://localhost:8080/
 ```
 
+| Recurso | URL | Descrição |
+|---------|-----|-----------|
+| **Swagger UI** | [http://localhost:8080/](http://localhost:8080/) | Interface gráfica para testar os endpoints |
+| **OpenAPI JSON** | [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs) | Especificação OpenAPI em formato JSON |
 
-#### Opção com Docker Run
+Pelo Swagger UI é possível testar todos os endpoints diretamente do navegador: basta expandir a operação desejada, clicar em **Try it out**, preencher os dados e clicar em **Execute**.
+
+Para validar rapidamente pelo terminal:
+
+```bash
+curl http://localhost:8080/api/v2/firewalls
+```
+
+---
+
+### 6. Encerrando os containers
+
+Para parar a aplicação, pressione `Ctrl + C` no terminal onde o `docker run` está sendo executado. Em seguida, remova o container do banco:
+
+```bash
+docker stop security_api_mysql
+docker rm security_api_mysql
+```
+
+---
+
+## 🛠️ Rodando a partir do código-fonte (desenvolvimento local)
+
+Alternativa à imagem do Docker Hub, para quem deseja alterar o código da aplicação.
+
+### 1. Subindo o Banco de Dados
 
 ```bash
 docker run -d \
   --name security_api_mysql \
   -e MYSQL_ROOT_PASSWORD=root_pwd \
-  -e MYSQL_DATABASE=api \
+  -e MYSQL_DATABASE=security \
   -p 3306:3306 \
   mysql:8.0
 ```
-
----
 
 ### 2. Rodando a API Spring Boot
 
 Com o banco de dados rodando, abra um terminal na raiz do projeto e execute:
 
 ```bash
-./mvnw spring-boot:run
+DB_SERVER_URL=localhost ./mvnw spring-boot:run
 ```
 
-No Windows:
+No Windows (PowerShell):
+
+```powershell
+$env:DB_SERVER_URL="localhost"; .\mvnw.cmd spring-boot:run
+```
+
+> A variável `DB_SERVER_URL` é necessária porque o valor padrão (`host.docker.internal`) só é resolvido de dentro de um container.
+
+A aplicação subirá em `http://localhost:8080` e as tabelas `firewalls` e `vulnerabilidades` serão criadas automaticamente pelo Hibernate (`spring.jpa.hibernate.ddl-auto=update`).
+
+### 3. Construindo a imagem Docker localmente
+
+O projeto inclui um `Dockerfile` com build multi-estágio (Maven + Eclipse Temurin 17):
 
 ```bash
-mvnw.cmd spring-boot:run
-```
-
-A aplicação subirá em:
-
-```text
-http://localhost:8080
-```
-
-As tabelas `firewalls` e `vulnerabilidades` serão criadas/atualizadas automaticamente pelo Hibernate, conforme a configuração:
-
-```properties
-spring.jpa.hibernate.ddl-auto=update
-```
-
----
-
-## 📖 Documentação da API (Swagger)
-
-Após subir a aplicação, acesse a documentação interativa em:
-
-```text
-http://localhost:8080/
-```
-
-A interface do Swagger UI permite testar todos os endpoints diretamente pelo navegador.
-
-A especificação OpenAPI em JSON está disponível em:
-
-```text
-http://localhost:8080/v3/api-docs
+docker build -t security_api:local .
 ```
 
 ---
@@ -593,19 +610,6 @@ curl -X PUT http://localhost:8080/api/v2/vulnerabilidades/1 \
 
 ```bash
 curl -X DELETE http://localhost:8080/api/v2/vulnerabilidades/1
-```
-
----
-
-## 🛑 Encerrando o ambiente
-
-Para parar a aplicação Spring Boot, pressione `Ctrl + C` no terminal onde ela está rodando.
-
-Se você usou `docker run` em vez de `docker compose`:
-
-```bash
-docker stop security_api_mysql
-docker rm security_api_mysql
 ```
 
 ---
