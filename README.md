@@ -335,28 +335,25 @@ Alternativa à imagem do Docker Hub, para quem deseja alterar o código da aplic
 
 ```bash
 docker run -d \
-  --name security_api_mysql \
+  --name mysql \
+  --rm \
   -e MYSQL_ROOT_PASSWORD=root_pwd \
-  -e MYSQL_DATABASE=security \
+  -e MYSQL_USER=new_user \
+  -e MYSQL_PASSWORD=my_pwd \
   -p 3306:3306 \
-  mysql:8.0
+  mysql
 ```
 
 ### 2. Rodando a API Spring Boot
 
 Com o banco de dados rodando, abra um terminal na raiz do projeto e execute:
 
-```bash
-DB_SERVER_URL=localhost ./mvnw spring-boot:run
-```
-
 No Windows (PowerShell):
 
 ```powershell
-$env:DB_SERVER_URL="localhost"; .\mvnw.cmd spring-boot:run
+.\mvnw spring-boot:run "-Dspring-boot.run.profiles=prd" 
 ```
-
-> A variável `DB_SERVER_URL` é necessária porque o valor padrão (`host.docker.internal`) só é resolvido de dentro de um container.
+> O comando "-Dspring-boot.run.profiles=" serve para definir o profile que sera utilizado para execução, sendo possível selecionar "default" ou "prd".
 
 A aplicação subirá em `http://localhost:8080` e as tabelas `firewalls` e `vulnerabilidades` serão criadas automaticamente pelo Hibernate (`spring.jpa.hibernate.ddl-auto=update`).
 
