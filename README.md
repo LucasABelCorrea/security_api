@@ -24,7 +24,7 @@ A aplicação foi refatorada para seguir uma separação de responsabilidades ma
 - [Endpoints Disponíveis](#-endpoints-disponíveis)
 - [Modelos, DTOs e campos esperados](#-modelos-dtos-e-campos-esperados)
 - [Exemplos de Requisições](#-exemplos-de-requisições)
-- [Autor](#-autor)
+- [Autor](#-autores)
 
 ---
 
@@ -614,6 +614,7 @@ curl -X DELETE http://localhost:8080/api/v2/vulnerabilidades/1
 ## 👨‍💻 Autores
 
 Lucas Almeida Bel Correa - RM: 558539
+
 Karine Nascimento Honório da Silva - RM: 558810
 
 Projeto desenvolvido para a disciplina de Microsservices — **FIAP - 3°SIR**.
