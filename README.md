@@ -200,7 +200,7 @@ docker pull lucasbel/security_api:1.0.0
 Para confirmar que a imagem foi baixada com sucesso:
 
 ```bash
-docker images lucasbel/security_api
+docker images
 ```
 
 ---
@@ -211,11 +211,13 @@ A aplicação depende de um banco **MySQL**. Suba um container antes de iniciar 
 
 ```bash
 docker run -d \
-  --name security_api_mysql \
+  --name mysql \
+  --rm \
   -e MYSQL_ROOT_PASSWORD=root_pwd \
-  -e MYSQL_DATABASE=security \
+  -e MYSQL_USER=new_user \
+  -e MYSQL_PASSWORD=my_pwd \
   -p 3306:3306 \
-  mysql:8.0
+  mysql
 ```
 
 > ⏳ Aguarde alguns segundos até o MySQL inicializar completamente antes de seguir para o próximo passo.
