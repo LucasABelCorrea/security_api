@@ -306,7 +306,6 @@ http://localhost:8080/
 | Recurso | URL | Descrição |
 |---------|-----|-----------|
 | **Swagger UI** | [http://localhost:8080/](http://localhost:8080/) | Interface gráfica para testar os endpoints |
-| **OpenAPI JSON** | [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs) | Especificação OpenAPI em formato JSON |
 
 Pelo Swagger UI é possível testar todos os endpoints diretamente do navegador: basta expandir a operação desejada, clicar em **Try it out**, preencher os dados e clicar em **Execute**.
 
