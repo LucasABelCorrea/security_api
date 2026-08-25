@@ -362,7 +362,7 @@ A aplicação subirá em `http://localhost:8080` e as tabelas `firewalls` e `vul
 O projeto inclui um `Dockerfile` com build multi-estágio (Maven + Eclipse Temurin 17):
 
 ```bash
-docker build -t security_api:local .
+docker build -t security_api:versão .
 ```
 
 ---
@@ -611,9 +611,10 @@ curl -X DELETE http://localhost:8080/api/v2/vulnerabilidades/1
 
 ---
 
-## 👨‍💻 Autor
+## 👨‍💻 Autores
 
 Lucas Almeida Bel Correa - RM: 558539
+Karine Nascimento Honório da Silva - RM: 558810
 
 Projeto desenvolvido para a disciplina de Microsservices — **FIAP - 3°SIR**.
 
