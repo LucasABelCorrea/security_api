@@ -1,128 +1,30 @@
 # Security API
 
-API REST desenvolvida em **Spring Boot** para gerenciamento de **Firewalls** e **Vulnerabilidades** de segurança da informação. Projeto desenvolvido para fins de estudo na FIAP.
+API REST desenvolvida em **Java com Spring Boot** para gerenciamento de **Firewalls** e **Vulnerabilidades**, utilizando **Microsoft SQL Server** como banco de dados.
 
-A aplicação foi refatorada para seguir uma separação de responsabilidades mais clara, utilizando **Controllers**, **Services**, **Repositories**, **Models** e **DTOs**.
-
----
-
-## 📋 Sumário
-
-- [Tecnologias Utilizadas](#-tecnologias-utilizadas)
-- [Pré-requisitos](#-pré-requisitos)
-- [Novidades da versão atual](#-novidades-da-versão-atual)
-- [Arquitetura da Aplicação](#-arquitetura-da-aplicação)
-- [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Como rodar a aplicação](#-como-rodar-a-aplicação)
-  - [1. Baixando a imagem do Docker Hub](#1-baixando-a-imagem-do-docker-hub)
-  - [2. Subindo o banco de dados MySQL](#2-subindo-o-banco-de-dados-mysql)
-  - [3. Variáveis de ambiente necessárias](#3-variáveis-de-ambiente-necessárias)
-  - [4. Executando a aplicação com docker run](#4-executando-a-aplicação-com-docker-run)
-  - [5. Acessando o Swagger](#5-acessando-o-swagger--openapi)
-  - [6. Encerrando os containers](#6-encerrando-os-containers)
-- [Rodando a partir do código-fonte (desenvolvimento local)](#️-rodando-a-partir-do-código-fonte-desenvolvimento-local)
-- [Endpoints Disponíveis](#-endpoints-disponíveis)
-- [Modelos, DTOs e campos esperados](#-modelos-dtos-e-campos-esperados)
-- [Exemplos de Requisições](#-exemplos-de-requisições)
-- [Autor](#-autores)
+Projeto desenvolvido para a disciplina de **Microservices and Web Engineering** da FIAP.
 
 ---
 
-## 🚀 Tecnologias Utilizadas
+## Tecnologias
 
-- **Java 17**
-- **Spring Boot 4.0.3**
-  - Spring Web MVC
-  - Spring Data JPA
-  - Spring Boot DevTools
-  - Spring Validation
-- **MySQL 8**
-- **Maven** (gerenciador de dependências — wrapper `mvnw` incluído)
-- **Lombok** (redução de boilerplate)
-- **ModelMapper** (mapeamento entre DTOs e Models)
-- **SpringDoc OpenAPI / Swagger UI** (documentação interativa)
-
----
-
-## ✅ Pré-requisitos
-
-Antes de começar, você precisa ter instalado na sua máquina:
-
-- [Java JDK 17+](https://adoptium.net/)
-- [Docker](https://www.docker.com/products/docker-desktop/) e [Docker Compose](https://docs.docker.com/compose/install/)
-- [Git](https://git-scm.com/) (para clonar o repositório)
-
-> 💡 **Não é necessário ter o Maven instalado!** O projeto inclui o Maven Wrapper (`mvnw` / `mvnw.cmd`).
+- Java 17
+- Spring Boot 4.0.3
+- Spring Web MVC
+- Spring Data JPA
+- Microsoft SQL Server
+- Microsoft JDBC Driver for SQL Server
+- Docker
+- Maven
+- Swagger / OpenAPI
+- Lombok
+- ModelMapper
 
 ---
 
-## 🆕 Novidades da versão atual
+## Arquitetura
 
-Esta versão inclui uma refatoração estrutural da API, com foco em organização, manutenção e padronização das entradas e saídas dos endpoints.
-
-### Camada de Service
-
-Foi criada uma camada de serviço para centralizar as regras de acesso e manipulação dos dados:
-
-- `FirewallService`
-- `VulnerabilidadeService`
-
-Os Controllers não acessam mais diretamente os Repositories. Agora eles chamam os Services, que por sua vez utilizam os Repositories para persistência e consulta no banco de dados.
-
-### DTOs de entrada e saída
-
-Foram adicionados DTOs para separar os dados recebidos e retornados pela API dos Models persistidos no banco.
-
-Para **Firewalls**:
-
-- `FirewallCreateRequest`
-- `FirewallUpdateRequest`
-- `FirewallResponse`
-- `FirewallMapper`
-
-Para **Vulnerabilidades**:
-
-- `VulnerabilidadeCreateRequest`
-- `VulnerabilidadeUpdateRequest`
-- `VulnerabilidadeResponse`
-- `VulnerabilidadeMapper`
-
-Essa separação evita expor diretamente as entidades JPA nos endpoints e permite controlar melhor quais campos entram no cadastro, quais campos entram na atualização e quais campos são devolvidos na resposta.
-
-### Geração automática de ID no Model
-
-Os identificadores agora são gerados automaticamente pelo banco/JPA com `@GeneratedValue(strategy = GenerationType.AUTO)`:
-
-- `Firewall.id`
-- `Vulnerabilidade.cve`
-
-Com isso, os campos `id` e `cve` **não devem ser enviados no corpo das requisições POST**. Eles são retornados pela API depois que o registro é criado.
-
-### Controllers refatorados
-
-Os Controllers foram ajustados para:
-
-- Receber DTOs de request com `@RequestBody`.
-- Validar entradas com `@Valid`.
-- Usar os Mappers para converter DTOs em Models e Models em DTOs de resposta.
-- Delegar operações de criação, consulta, atualização e remoção para a camada de Service.
-- Retornar `ResponseEntity` com status HTTP adequado, como `201 Created`, `200 OK`, `204 No Content` e `404 Not Found`.
-
----
-
-## 🧱 Arquitetura da Aplicação
-
-A aplicação está organizada em camadas:
-
-| Camada | Responsabilidade |
-|--------|------------------|
-| `controller` | Expõe os endpoints REST e recebe as requisições HTTP. |
-| `dto` | Define objetos de entrada, saída e mapeamento entre DTOs e Models. |
-| `service` | Centraliza a lógica de aplicação e intermedia Controller e Repository. |
-| `repository` | Realiza a comunicação com o banco usando Spring Data JPA. |
-| `model` | Representa as entidades JPA persistidas no banco de dados. |
-
-Fluxo principal da API:
+A aplicação segue uma arquitetura em camadas:
 
 ```text
 Requisição HTTP
@@ -135,345 +37,354 @@ Service
       ↓
 Repository
       ↓
-Banco de Dados
+SQL Server
 ```
+
+### Responsabilidades
+
+| Camada | Responsabilidade |
+|---|---|
+| `controller` | Disponibiliza os endpoints REST |
+| `dto` | Define objetos de entrada, saída e mapeamento |
+| `service` | Centraliza a lógica da aplicação |
+| `repository` | Realiza a persistência utilizando Spring Data JPA |
+| `model` | Representa as entidades persistidas no banco |
 
 ---
 
-## 📂 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```text
 security_api/
 ├── src/
-│   └── main/
-│       ├── java/br/com/fiap/security_api/
-│       │   ├── Application.java
-│       │   ├── controller/
-│       │   │   ├── FirewallController.java
-│       │   │   └── VulnerabilidadeController.java
-│       │   ├── dto/
-│       │   │   ├── FirewallCreateRequest.java
-│       │   │   ├── FirewallMapper.java
-│       │   │   ├── FirewallResponse.java
-│       │   │   ├── FirewallUpdateRequest.java
-│       │   │   ├── VulnerabilidadeCreateRequest.java
-│       │   │   ├── VulnerabilidadeMapper.java
-│       │   │   ├── VulnerabilidadeResponse.java
-│       │   │   └── VulnerabilidadeUpdateRequest.java
-│       │   ├── model/
-│       │   │   ├── Firewall.java
-│       │   │   └── Vulnerabilidade.java
-│       │   ├── repository/
-│       │   │   ├── FirewallRepository.java
-│       │   │   └── VulnerabilidadeRepository.java
-│       │   └── service/
-│       │       ├── FirewallService.java
-│       │       └── VulnerabilidadeService.java
-│       └── resources/
-│           └── application.properties
+│   ├── main/
+│   │   ├── java/br/com/fiap/security_api/
+│   │   │   ├── Application.java
+│   │   │   │
+│   │   │   ├── controller/
+│   │   │   │   ├── FirewallController.java
+│   │   │   │   └── VulnerabilidadeController.java
+│   │   │   │
+│   │   │   ├── dto/
+│   │   │   │   ├── FirewallCreateRequest.java
+│   │   │   │   ├── FirewallUpdateRequest.java
+│   │   │   │   ├── FirewallResponse.java
+│   │   │   │   ├── FirewallMapper.java
+│   │   │   │   ├── VulnerabilidadeCreateRequest.java
+│   │   │   │   ├── VulnerabilidadeUpdateRequest.java
+│   │   │   │   ├── VulnerabilidadeResponse.java
+│   │   │   │   └── VulnerabilidadeMapper.java
+│   │   │   │
+│   │   │   ├── model/
+│   │   │   │   ├── Firewall.java
+│   │   │   │   └── Vulnerabilidade.java
+│   │   │   │
+│   │   │   ├── repository/
+│   │   │   │   ├── FirewallRepository.java
+│   │   │   │   └── VulnerabilidadeRepository.java
+│   │   │   │
+│   │   │   └── service/
+│   │   │       ├── FirewallService.java
+│   │   │       └── VulnerabilidadeService.java
+│   │   │
+│   │   └── resources/
+│   │       ├── application-dev.properties
+│   │       ├── application-prd.properties
+│   │       │
+│   │       └── mysql/
+│   │           ├── application.properties
+│   │           ├── application-dev.properties
+│   │           └── application-prd.properties
+│   │
+│   └── test/
+│       └── java/
+│
+├── Dockerfile
 ├── pom.xml
 ├── mvnw
 ├── mvnw.cmd
 └── README.md
 ```
 
----
+As configurações utilizadas atualmente pela aplicação estão em:
 
-## ▶️ Como rodar a aplicação
-
-A forma recomendada de executar a aplicação é a partir da imagem publicada no **Docker Hub**. Não é necessário clonar o repositório, instalar o Java ou compilar o projeto — basta ter o **Docker** instalado.
-
-Imagem oficial: [`lucasbel/security_api:1.0.0`](https://hub.docker.com/r/lucasbel/security_api)
-
-Siga os passos abaixo na ordem.
-
----
-
-### 1. Baixando a imagem do Docker Hub
-
-Faça o download da imagem da aplicação:
-
-```bash
-docker pull lucasbel/security_api:1.0.0
+```text
+application-dev.properties
+application-prd.properties
 ```
 
-Para confirmar que a imagem foi baixada com sucesso:
+Os arquivos presentes na pasta:
 
-```bash
-docker images
+```text
+resources/mysql/
+```
+
+contêm as configurações antigas utilizadas com **MySQL** e foram mantidos apenas como referência.
+
+Por estarem em uma subpasta, esses arquivos não são carregados automaticamente durante a execução normal do Spring Boot.
+
+Para os testes locais deste projeto é utilizado o profile:
+
+```text
+dev
 ```
 
 ---
 
-### 2. Subindo o banco de dados MySQL
+# Executando o projeto localmente
 
-A aplicação depende de um banco **MySQL**. Suba um container antes de iniciar a API:
+## 1. Subir o SQL Server com Docker
+
+Execute o seguinte comando:
 
 ```bash
 docker run -d \
-  --name mysql \
+  --name sqlserver \
   --rm \
-  -e MYSQL_ROOT_PASSWORD=root_pwd \
-  -e MYSQL_USER=new_user \
-  -e MYSQL_PASSWORD=my_pwd \
-  -p 3306:3306 \
-  mysql
+  -e MSSQL_SA_PASSWORD=1q2w3e4R@ \
+  -e "ACCEPT_EULA=Y" \
+  -p 1433:1433 \
+  mcr.microsoft.com/mssql/server:latest
 ```
 
-> ⏳ Aguarde alguns segundos até o MySQL inicializar completamente antes de seguir para o próximo passo.
-
----
-
-### 3. Variáveis de ambiente necessárias
-
-A imagem recebe toda a configuração por variáveis de ambiente, passadas com a flag `-e` no `docker run`:
-
-| Variável | Descrição | Valor de exemplo |
-|----------|-----------|------------------|
-| `DB_SERVER_URL` | Host do servidor MySQL | `host.docker.internal` |
-| `DB_SERVER_PORT` | Porta do servidor MySQL | `3306` |
-| `DB_SCHEMA` | Nome do schema/banco de dados | `security` |
-| `DB_USER` | Usuário do banco de dados | `root` |
-| `DB_PWD` | Senha do banco de dados | `root_pwd` |
-| `SPRING_PROFILES_ACTIVE` | Profile ativo da aplicação (`default` ou `prd`) | `default` |
-
-> 💡 **Sobre o `host.docker.internal`:** esse hostname permite que o container da API acesse o MySQL rodando na máquina host. No **Linux**, adicione também `--add-host=host.docker.internal:host-gateway` ao comando `docker run`.
-
----
-
-### 4. Executando a aplicação com `docker run`
-
-O comando mapeia a porta **8080**, define o **profile** e passa as **variáveis de ambiente** de conexão com o banco.
-
-#### Profile `default` — recomendado para testar a imagem
-
-Cria o banco e as tabelas automaticamente. É o profile ideal para o primeiro teste, pois não exige nenhuma preparação prévia do banco:
-
-```bash
-docker run -p 8080:8080 \
-  -e DB_SERVER_URL=host.docker.internal \
-  -e DB_SERVER_PORT=3306 \
-  -e DB_SCHEMA=security \
-  -e DB_USER=root \
-  -e DB_PWD=root_pwd \
-  -e SPRING_PROFILES_ACTIVE=default \
-  lucasbel/security_api:1.0.0
-```
-
-#### Profile `prd` — execução em produção
-
-Não altera o schema do banco. Exige que o banco **e as tabelas já existam** previamente:
-
-```bash
-docker run -p 8080:8080 \
-  -e DB_SERVER_URL=host.docker.internal \
-  -e DB_SERVER_PORT=3306 \
-  -e DB_SCHEMA=security \
-  -e DB_USER=root \
-  -e DB_PWD=root_pwd \
-  -e SPRING_PROFILES_ACTIVE=prd \
-  lucasbel/security_api:1.0.0
-```
-
-#### Diferença entre os profiles
-
-| Comportamento | `default` | `prd` |
-|---------------|-----------|-------|
-| Cria o banco se não existir (`createDatabaseIfNotExist`) | ✅ Sim | ❌ Não |
-| Cria/atualiza tabelas (`spring.jpa.hibernate.ddl-auto`) | `update` | `none` |
-| Exibe as queries SQL no log (`spring.jpa.show-sql`) | `true` | `false` |
-| Exige banco e tabelas pré-existentes | Não | Sim |
-| Uso indicado | Desenvolvimento e testes | Produção |
-
-> ⚠️ Ao usar o profile `prd` sem que o banco e as tabelas existam, a aplicação iniciará mas as requisições aos endpoints falharão. Para o primeiro teste da imagem, use o profile `default`.
-
-A aplicação estará pronta quando o log exibir:
+O SQL Server será disponibilizado localmente com as seguintes configurações:
 
 ```text
-Started Application in X.XXX seconds
+Host: localhost
+Porta: 1433
+Usuário: sa
+Senha: 1q2w3e4R@
+```
+
+> As credenciais acima são utilizadas exclusivamente no ambiente local de desenvolvimento.
+
+Para verificar se o container está em execução:
+
+```bash
+docker ps
+```
+
+O container deverá aparecer como:
+
+```text
+sqlserver
+```
+
+com o mapeamento:
+
+```text
+1433:1433
 ```
 
 ---
 
-### 5. Acessando o Swagger
-Com a aplicação rodando, acesse a documentação interativa pelo navegador em:
+## 2. Configurar o DBeaver
+
+Crie uma nova conexão utilizando o driver:
+
+```text
+SQL Server
+```
+
+Configure inicialmente:
+
+```text
+Host: localhost
+Porta: 1433
+Database: master
+Authentication: SQL Server Authentication
+Usuário: sa
+Senha: 1q2w3e4R@
+```
+
+Teste a conexão.
+
+Após conectar, crie o banco utilizado pela aplicação:
+
+```sql
+CREATE DATABASE api;
+```
+
+Depois, altere a conexão do DBeaver para utilizar:
+
+```text
+Database: api
+```
+
+Configuração final:
+
+```text
+Host: localhost
+Porta: 1433
+Database: api
+Usuário: sa
+Senha: 1q2w3e4R@
+```
+
+---
+
+## 3. Configuração do SQL Server no Spring Boot
+
+O profile `dev` utiliza o arquivo:
+
+```text
+src/main/resources/application-dev.properties
+```
+
+A conexão é configurada através das seguintes propriedades:
+
+```properties
+spring.datasource.url=jdbc:sqlserver://${DB_SERVER_URL}:${DB_SERVER_PORT};databaseName=${DB_SCHEMA};encrypt=false;trustServerCertificate=true
+spring.datasource.username=${DB_USER}
+spring.datasource.password=${DB_PWD}
+spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.database-platform=org.hibernate.dialect.SQLServerDialect
+```
+
+O Hibernate utiliza:
+
+```properties
+spring.jpa.hibernate.ddl-auto=update
+```
+
+permitindo criar e atualizar automaticamente as tabelas correspondentes às entidades da aplicação.
+
+---
+
+## 4. Configurar as variáveis de ambiente
+
+No **PowerShell**, execute:
+
+```powershell
+$env:DB_SERVER_URL="localhost"
+$env:DB_SERVER_PORT="1433"
+$env:DB_SCHEMA="api"
+$env:DB_USER="sa"
+$env:DB_PWD="1q2w3e4R@"
+$env:SPRING_PROFILES_ACTIVE="dev"
+```
+
+Essas variáveis correspondem às mesmas credenciais utilizadas ao criar o container SQL Server.
+
+Para conferir:
+
+```powershell
+echo $env:DB_SERVER_URL
+echo $env:DB_SERVER_PORT
+echo $env:DB_SCHEMA
+echo $env:DB_USER
+echo $env:SPRING_PROFILES_ACTIVE
+```
+
+Resultado esperado:
+
+```text
+localhost
+1433
+api
+sa
+dev
+```
+
+---
+
+## 5. Executar a aplicação
+
+Na raiz do projeto, execute:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+O Spring Boot deverá utilizar o profile:
+
+```text
+dev
+```
+
+Durante a inicialização será possível visualizar:
+
+```text
+The following 1 profile is active: "dev"
+```
+
+e, após conectar corretamente ao SQL Server:
+
+```text
+HikariPool-1 - Start completed
+```
+
+A aplicação estará disponível na porta:
+
+```text
+8080
+```
+
+---
+
+# Swagger
+
+A documentação interativa da API pode ser acessada em:
 
 ```text
 http://localhost:8080/
 ```
 
-| Recurso | URL | Descrição |
-|---------|-----|-----------|
-| **Swagger UI** | [http://localhost:8080/](http://localhost:8080/) | Interface gráfica para testar os endpoints |
-
-Pelo Swagger UI é possível testar todos os endpoints diretamente do navegador: basta expandir a operação desejada, clicar em **Try it out**, preencher os dados e clicar em **Execute**.
-
-Para validar rapidamente pelo terminal:
-
-```bash
-curl http://localhost:8080/api/v2/firewalls
-```
-
----
-
-### 6. Encerrando os containers
-
-Para parar a aplicação, pressione `Ctrl + C` no terminal onde o `docker run` está sendo executado. Em seguida, remova o container do banco:
-
-```bash
-docker stop security_api_mysql
-docker rm security_api_mysql
-```
-
----
-
-## 🛠️ Rodando a partir do código-fonte (desenvolvimento local)
-
-Alternativa à imagem do Docker Hub, para quem deseja alterar o código da aplicação.
-
-### 1. Subindo o Banco de Dados
-
-```bash
-docker run -d \
-  --name mysql \
-  --rm \
-  -e MYSQL_ROOT_PASSWORD=root_pwd \
-  -e MYSQL_USER=new_user \
-  -e MYSQL_PASSWORD=my_pwd \
-  -p 3306:3306 \
-  mysql
-```
-
-### 2. Rodando a API Spring Boot
-
-Com o banco de dados rodando, abra um terminal na raiz do projeto e execute:
-
-No Windows (PowerShell):
-
-```powershell
-.\mvnw spring-boot:run "-Dspring-boot.run.profiles=prd" 
-```
-> O comando "-Dspring-boot.run.profiles=" serve para definir o profile que sera utilizado para execução, sendo possível selecionar "default" ou "prd".
-
-A aplicação subirá em `http://localhost:8080` e as tabelas `firewalls` e `vulnerabilidades` serão criadas automaticamente pelo Hibernate (`spring.jpa.hibernate.ddl-auto=update`).
-
-### 3. Construindo a imagem Docker localmente
-
-O projeto inclui um `Dockerfile` com build multi-estágio (Maven + Eclipse Temurin 17):
-
-```bash
-docker build -t security_api:versão .
-```
-
----
-
-## 🔌 Endpoints Disponíveis
-
-Todos os endpoints utilizam o prefixo configurado em `application.properties`:
+O profile `dev` utiliza:
 
 ```properties
-api.version=v2
+api.version=v1
 ```
 
-Portanto, o prefixo atual é:
+Portanto, os endpoints estão disponíveis em:
 
 ```text
-/api/v2
+/api/v1
 ```
-
-### Firewalls — `/api/v2/firewalls`
-
-| Método | Endpoint | Descrição | Body |
-|--------|----------|-----------|------|
-| POST | `/api/v2/firewalls` | Cria um novo firewall | `FirewallCreateRequest` |
-| GET | `/api/v2/firewalls` | Lista todos os firewalls | Não possui |
-| GET | `/api/v2/firewalls/{id}` | Busca um firewall pelo ID | Não possui |
-| PUT | `/api/v2/firewalls/{id}` | Atualiza um firewall existente | `FirewallUpdateRequest` |
-| DELETE | `/api/v2/firewalls/{id}` | Remove um firewall | Não possui |
-
-### Vulnerabilidades — `/api/v2/vulnerabilidades`
-
-| Método | Endpoint | Descrição | Body |
-|--------|----------|-----------|------|
-| POST | `/api/v2/vulnerabilidades` | Cria uma nova vulnerabilidade | `VulnerabilidadeCreateRequest` |
-| GET | `/api/v2/vulnerabilidades` | Lista todas as vulnerabilidades | Não possui |
-| GET | `/api/v2/vulnerabilidades/{cve}` | Busca uma vulnerabilidade pelo identificador CVE gerado | Não possui |
-| PUT | `/api/v2/vulnerabilidades/{cve}` | Atualiza uma vulnerabilidade existente | `VulnerabilidadeUpdateRequest` |
-| DELETE | `/api/v2/vulnerabilidades/{cve}` | Remove uma vulnerabilidade | Não possui |
 
 ---
 
-## 📦 Modelos, DTOs e campos esperados
+# Endpoints
 
-### Firewall
+## Firewalls
 
-Entidade persistida: `Firewall`
+| Método | Endpoint | Operação |
+|---|---|---|
+| POST | `/api/v1/firewalls` | Criar firewall |
+| GET | `/api/v1/firewalls` | Listar todos |
+| GET | `/api/v1/firewalls/{id}` | Buscar por ID |
+| PUT | `/api/v1/firewalls/{id}` | Atualizar |
+| DELETE | `/api/v1/firewalls/{id}` | Excluir |
 
-| Campo | Tipo | Observação |
-|-------|------|------------|
-| `id` | `Long` | Gerado automaticamente. |
-| `nome` | `String` | Obrigatório. |
-| `cluster` | `String` | Opcional. |
-| `numBlades` | `BigDecimal` | Obrigatório. |
-| `vendor` | `String` | Obrigatório. |
-
-#### `FirewallCreateRequest`
-
-Usado no `POST /api/v2/firewalls`.
+### Exemplo de criação
 
 ```json
 {
   "nome": "FW-Core-01",
-  "cluster": "DC-SP-01",
+  "cluster": "Cluster-SP",
   "numBlades": 4,
   "vendor": "Check Point"
 }
 ```
 
-#### `FirewallUpdateRequest`
-
-Usado no `PUT /api/v2/firewalls/{id}`.
-
-```json
-{
-  "nome": "FW-Core-01-Atualizado",
-  "cluster": "DC-SP-02",
-  "numBlades": 6,
-  "vendor": "Check Point"
-}
-```
-
-#### `FirewallResponse`
-
-Resposta retornada pela API.
-
-```json
-{
-  "id": 1,
-  "nome": "FW-Core-01",
-  "cluster": "DC-SP-01",
-  "numBlades": 4,
-  "vendor": "Check Point"
-}
-```
+O campo `id` é gerado automaticamente.
 
 ---
 
-### Vulnerabilidade
+## Vulnerabilidades
 
-Entidade persistida: `Vulnerabilidade`
+| Método | Endpoint | Operação |
+|---|---|---|
+| POST | `/api/v1/vulnerabilidades` | Criar vulnerabilidade |
+| GET | `/api/v1/vulnerabilidades` | Listar todas |
+| GET | `/api/v1/vulnerabilidades/{cve}` | Buscar por CVE |
+| PUT | `/api/v1/vulnerabilidades/{cve}` | Atualizar |
+| DELETE | `/api/v1/vulnerabilidades/{cve}` | Excluir |
 
-| Campo | Tipo | Observação |
-|-------|------|------------|
-| `cve` | `Long` | Gerado automaticamente. |
-| `titulo` | `String` | Obrigatório. |
-| `severidade` | `BigDecimal` | Obrigatório. |
-| `versao` | `BigDecimal` | Obrigatório. |
-| `qtdAtivosAfetados` | `Integer` | Obrigatório. |
-
-#### `VulnerabilidadeCreateRequest`
-
-Usado no `POST /api/v2/vulnerabilidades`.
+### Exemplo de criação
 
 ```json
 {
@@ -484,139 +395,205 @@ Usado no `POST /api/v2/vulnerabilidades`.
 }
 ```
 
-#### `VulnerabilidadeUpdateRequest`
+O campo `cve` é gerado automaticamente.
 
-Usado no `PUT /api/v2/vulnerabilidades/{cve}`.
+---
 
-```json
-{
-  "titulo": "Remote Code Execution - Atualizada",
-  "severidade": 9.9,
-  "versao": 3.1,
-  "qtdAtivosAfetados": 18
-}
+# Validação do CRUD
+
+O CRUD pode ser validado utilizando o **Swagger** para realizar as requisições e o **DBeaver** para confirmar a persistência dos dados no SQL Server.
+
+## CREATE
+
+Realize um POST pelo Swagger:
+
+```text
+POST /api/v1/firewalls
 ```
 
-#### `VulnerabilidadeResponse`
+ou:
 
-Resposta retornada pela API.
+```text
+POST /api/v1/vulnerabilidades
+```
 
-```json
-{
-  "cve": 1,
-  "titulo": "Remote Code Execution",
-  "severidade": 9.8,
-  "versao": 3.1,
-  "qtdAtivosAfetados": 12
-}
+Depois consulte o banco pelo DBeaver:
+
+```sql
+SELECT * FROM firewalls;
+```
+
+```sql
+SELECT * FROM vulnerabilidades;
+```
+
+O registro criado pela API deverá estar presente no SQL Server.
+
+---
+
+## READ
+
+Para listar os registros:
+
+```text
+GET /api/v1/firewalls
+GET /api/v1/vulnerabilidades
+```
+
+Para consultar um registro específico:
+
+```text
+GET /api/v1/firewalls/{id}
+GET /api/v1/vulnerabilidades/{cve}
 ```
 
 ---
 
-## 🧪 Exemplos de Requisições
+## UPDATE
 
-### Criar um Firewall
+Realize uma atualização:
 
-> O campo `id` não deve ser enviado. Ele é gerado automaticamente.
-
-```bash
-curl -X POST http://localhost:8080/api/v2/firewalls \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nome": "FW-Core-01",
-    "cluster": "DC-SP-01",
-    "numBlades": 4,
-    "vendor": "Check Point"
-  }'
+```text
+PUT /api/v1/firewalls/{id}
 ```
 
-### Listar Firewalls
+ou:
 
-```bash
-curl http://localhost:8080/api/v2/firewalls
+```text
+PUT /api/v1/vulnerabilidades/{cve}
 ```
 
-### Buscar Firewall por ID
+Depois valide pelo DBeaver:
 
-```bash
-curl http://localhost:8080/api/v2/firewalls/1
+```sql
+SELECT * FROM firewalls;
 ```
 
-### Atualizar um Firewall
-
-```bash
-curl -X PUT http://localhost:8080/api/v2/firewalls/1 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nome": "FW-Core-01-Atualizado",
-    "cluster": "DC-SP-02",
-    "numBlades": 6,
-    "vendor": "Check Point"
-  }'
+```sql
+SELECT * FROM vulnerabilidades;
 ```
 
-### Remover um Firewall
+O registro deverá apresentar os valores atualizados.
 
-```bash
-curl -X DELETE http://localhost:8080/api/v2/firewalls/1
+---
+
+## DELETE
+
+Realize uma exclusão:
+
+```text
+DELETE /api/v1/firewalls/{id}
+```
+
+ou:
+
+```text
+DELETE /api/v1/vulnerabilidades/{cve}
+```
+
+Depois consulte novamente:
+
+```sql
+SELECT * FROM firewalls;
+```
+
+```sql
+SELECT * FROM vulnerabilidades;
+```
+
+O registro excluído não deverá mais estar presente.
+
+---
+
+# Fluxo da aplicação
+
+```text
+Swagger
+   ↓
+API REST - Spring Boot
+   ↓
+Controller
+   ↓
+DTO / Mapper
+   ↓
+Service
+   ↓
+Repository
+   ↓
+Spring Data JPA
+   ↓
+Microsoft JDBC Driver
+   ↓
+SQL Server
+localhost:1433
+   ↓
+Database api
+   ↓
+DBeaver
+```
+
+As operações realizadas através da API são persistidas diretamente no banco **SQL Server**, podendo ser verificadas pelo DBeaver.
+
+---
+
+# Persistência
+
+A aplicação utiliza **Spring Data JPA** através dos seguintes repositories:
+
+```text
+FirewallRepository
+VulnerabilidadeRepository
+```
+
+As entidades correspondentes às tabelas utilizadas são:
+
+```text
+Firewall
+Vulnerabilidade
+```
+
+Mapeadas respectivamente para:
+
+```text
+firewalls
+vulnerabilidades
+```
+
+Os identificadores são gerados automaticamente utilizando:
+
+```java
+@GeneratedValue(strategy = GenerationType.AUTO)
 ```
 
 ---
 
-### Criar uma Vulnerabilidade
+# Encerrando o ambiente
 
-> O campo `cve` não deve ser enviado. Ele é gerado automaticamente.
-
-```bash
-curl -X POST http://localhost:8080/api/v2/vulnerabilidades \
-  -H "Content-Type: application/json" \
-  -d '{
-    "titulo": "Remote Code Execution",
-    "severidade": 9.8,
-    "versao": 3.1,
-    "qtdAtivosAfetados": 12
-  }'
-```
-
-### Listar Vulnerabilidades
+Para encerrar o SQL Server:
 
 ```bash
-curl http://localhost:8080/api/v2/vulnerabilidades
+docker stop sqlserver
 ```
 
-### Buscar Vulnerabilidade por CVE
+Como o container foi criado utilizando:
 
-```bash
-curl http://localhost:8080/api/v2/vulnerabilidades/1
+```text
+--rm
 ```
 
-### Atualizar uma Vulnerabilidade
+ele será removido automaticamente após ser encerrado.
 
-```bash
-curl -X PUT http://localhost:8080/api/v2/vulnerabilidades/1 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "titulo": "Remote Code Execution - Atualizada",
-    "severidade": 9.9,
-    "versao": 3.1,
-    "qtdAtivosAfetados": 18
-  }'
-```
-
-### Remover uma Vulnerabilidade
-
-```bash
-curl -X DELETE http://localhost:8080/api/v2/vulnerabilidades/1
-```
+Os dados desse container também não são persistidos após sua remoção, pois não foi configurado um volume Docker para o SQL Server.
 
 ---
 
-## 👨‍💻 Autores
+# Autores
 
-Lucas Almeida Bel Correa - RM: 558539
+**Lucas Almeida Bel Correa**  
+RM 558539
 
-Karine Nascimento Honório da Silva - RM: 558810
+**Guilherme Tusita**  
+RM 554511
 
-Projeto desenvolvido para a disciplina de Microsservices — **FIAP - 3°SIR**.
-
----
+FIAP — Sistemas de Informação  
+Microservices and Web Engineering
